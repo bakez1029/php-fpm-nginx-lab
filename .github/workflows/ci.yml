@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  docker-compose-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare env file
+        run: |
+          if [ -f src/.env.example ]; then
+            cp src/.env.example src/.env
+          else
+            echo "src/.env.example missing" >&2
+            exit 1
+          fi
+
+      - name: Build and start stack
+        run: |
+          docker compose up -d --build
+          docker compose ps
+
+      - name: Wait for Nginx
+        run: |
+          # wait up to ~60s for the HTTP endpoint
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8080 >/dev/null; then
+              echo "Nginx is up"
+              exit 0
+            fi
+            echo "Waiting for Nginx... ($i)"
+            sleep 2
+          done
+          echo "Nginx did not become ready" >&2
+          docker compose logs --tail=200 nginx php mysql
+          exit 1
+
+      - name: DB smoke test (run query from PHP container)
+        run: |
+          docker compose exec -T php php -r '
+            require "/var/www/html/bootstrap.php";
+            $dsn = sprintf("mysql:host=%s;dbname=%s;charset=utf8mb4", $_ENV["DB_HOST"], $_ENV["DB_NAME"]);
+            $pdo = new PDO($dsn, $_ENV["DB_USER"], $_ENV["DB_PASS"], [
+              PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+            $row = $pdo->query("SELECT 1 AS ok")->fetch(PDO::FETCH_ASSOC);
+            if (($row["ok"] ?? null) != 1) { throw new Exception("DB query failed"); }
+            echo "DB OK\n";
+          '
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 nginx php mysql
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose down -v
