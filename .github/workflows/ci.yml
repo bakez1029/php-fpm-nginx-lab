@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare env file
+      - name: Prepare .env file
         run: |
           if [ -f src/.env.example ]; then
             cp src/.env.example src/.env
@@ -21,14 +21,17 @@ jobs:
             exit 1
           fi
 
+      - name: Install PHP dependencies
+        run: |
+          docker compose run --rm composer install --no-interaction --prefer-dist
+
       - name: Build and start stack
         run: |
           docker compose up -d --build
           docker compose ps
 
-      - name: Wait for Nginx
+      - name: Wait for Nginx to respond
         run: |
-          # wait up to ~60s for the HTTP endpoint
           for i in {1..30}; do
             if curl -fsS http://localhost:8080 >/dev/null; then
               echo "Nginx is up"
@@ -41,20 +44,29 @@ jobs:
           docker compose logs --tail=200 nginx php mysql
           exit 1
 
-      - name: DB smoke test (run query from PHP container)
+      - name: Database smoke test
         run: |
           docker compose exec -T php php -r '
             require "/var/www/html/bootstrap.php";
-            $dsn = sprintf("mysql:host=%s;dbname=%s;charset=utf8mb4", $_ENV["DB_HOST"], $_ENV["DB_NAME"]);
-            $pdo = new PDO($dsn, $_ENV["DB_USER"], $_ENV["DB_PASS"], [
-              PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
+            $dsn = sprintf(
+              "mysql:host=%s;dbname=%s;charset=utf8mb4",
+              $_ENV["DB_HOST"],
+              $_ENV["DB_NAME"]
+            );
+            $pdo = new PDO(
+              $dsn,
+              $_ENV["DB_USER"],
+              $_ENV["DB_PASS"],
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
             $row = $pdo->query("SELECT 1 AS ok")->fetch(PDO::FETCH_ASSOC);
-            if (($row["ok"] ?? null) != 1) { throw new Exception("DB query failed"); }
+            if (($row["ok"] ?? null) != 1) {
+              throw new Exception("DB query failed");
+            }
             echo "DB OK\n";
           '
 
-      - name: Dump logs on failure
+      - name: Dump logs if failure
         if: failure()
         run: |
           docker compose ps
