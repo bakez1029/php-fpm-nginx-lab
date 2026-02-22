@@ -68,6 +68,11 @@ jobs:
 
       - name: Build image
         run: |
+          echo "Workspace is:"
+          echo $GITHUB_WORKSPACE
+          ls -la $GITHUB_WORKSPACE
+          ls -la $GITHUB_WORKSPACE/php
+
           docker build \
             -t $IMAGE_NAME:${{ github.sha }} \
             -f $GITHUB_WORKSPACE/php/Dockerfile \
