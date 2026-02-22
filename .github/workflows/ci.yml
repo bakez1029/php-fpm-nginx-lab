@@ -8,10 +8,15 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/php-app
+  APP_DIR: php-lab/fpm-nginx
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
 
     steps:
       - name: Checkout
@@ -64,6 +69,10 @@ jobs:
       packages: write
       contents: read
 
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,7 +82,11 @@ jobs:
 
       - name: Build image
         run: |
-          docker build -t $IMAGE_NAME:${{ github.sha }} -f php/Dockerfile .
+          docker build \
+            -t $IMAGE_NAME:${{ github.sha }} \
+            -f php/Dockerfile \
+            .
+
           docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:latest
 
       - name: Push image
