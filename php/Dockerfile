@@ -5,7 +5,7 @@ RUN apk add --no-cache bash curl
 
 WORKDIR /var/www/html
 
-# Copy composer files first for caching
+# Copy composer files first (for layer caching)
 COPY src/composer.json src/composer.lock ./
 
 # Install composer
@@ -17,4 +17,5 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
 # Copy application source
 COPY src .
 
+# Copy PHP config
 COPY php/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
