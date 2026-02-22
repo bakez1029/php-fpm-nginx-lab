@@ -22,8 +22,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare .env
-        run: cp src/.env.example src/.env
+
+      - name: Create .env for CI
+        run: |
+        cat <<EOF > src/.env
+        DB_HOST=mysql
+        DB_NAME=app
+        DB_USER=root
+        DB_PASS=root
+        EOF
 
       - name: Install dependencies
         run: docker compose run --rm composer install --no-interaction --prefer-dist
