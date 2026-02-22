@@ -8,4 +8,6 @@ RUN apk add --no-cache bash curl
 
 WORKDIR /var/www/html
 
+COPY ../src .
+
 COPY php.ini /usr/local/etc/php/conf.d/zz-custom.ini
