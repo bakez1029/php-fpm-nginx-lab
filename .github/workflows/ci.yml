@@ -63,16 +63,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug repository structure
+        run: |
+          echo "===== WORKSPACE ====="
+          echo $GITHUB_WORKSPACE
+
+          echo "===== ROOT FILES ====="
+          ls -la $GITHUB_WORKSPACE
+
+          echo "===== PHP DIRECTORY ====="
+          ls -la $GITHUB_WORKSPACE/php || echo "php folder missing"
+
+          echo "===== SEARCH FOR php.ini ====="
+          find $GITHUB_WORKSPACE -name "php.ini"
+
+          echo "===== DOCKERIGNORE CONTENT ====="
+          cat $GITHUB_WORKSPACE/.dockerignore || echo "No .dockerignore found"
+
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Build image
         run: |
-          echo "Workspace is:"
-          echo $GITHUB_WORKSPACE
-          ls -la $GITHUB_WORKSPACE
-          ls -la $GITHUB_WORKSPACE/php
-
           docker build \
             -t $IMAGE_NAME:${{ github.sha }} \
             -f $GITHUB_WORKSPACE/php/Dockerfile \
