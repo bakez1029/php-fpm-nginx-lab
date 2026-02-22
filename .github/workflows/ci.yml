@@ -70,8 +70,8 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME:${{ github.sha }} \
-            -f php/Dockerfile \
-            .
+            -f $GITHUB_WORKSPACE/php/Dockerfile \
+            $GITHUB_WORKSPACE
 
           docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:latest
 
