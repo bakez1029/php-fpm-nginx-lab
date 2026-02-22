@@ -17,4 +17,4 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
 # Copy application source
 COPY src .
 
-COPY php.ini /usr/local/etc/php/conf.d/zz-custom.ini
+COPY php/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
