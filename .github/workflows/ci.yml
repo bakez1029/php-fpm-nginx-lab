@@ -10,7 +10,6 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/php-app
 
 jobs:
-
   build-test:
     runs-on: ubuntu-latest
 
@@ -20,12 +19,12 @@ jobs:
 
       - name: Create .env for CI
         run: |
-        cat <<EOF > src/.env
-        DB_HOST=mysql
-        DB_NAME=app
-        DB_USER=app
-        DB_PASS=apppass
-        EOF
+          cat <<EOF > src/.env
+          DB_HOST=mysql
+          DB_NAME=app
+          DB_USER=app
+          DB_PASS=apppass
+          EOF
 
       - name: Install dependencies
         run: docker compose run --rm composer install --no-interaction --prefer-dist
@@ -48,7 +47,6 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v
-
 
   push-image:
     needs: build-test
