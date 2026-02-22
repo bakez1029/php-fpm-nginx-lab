@@ -73,7 +73,7 @@ jobs:
 
       - name: Build image
         run: |
-          docker build -t $IMAGE_NAME:${{ github.sha }} -f php/Dockerfile ./php
+          docker build -t $IMAGE_NAME:${{ github.sha }} -f php/Dockerfile .
           docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:latest
 
       - name: Push image

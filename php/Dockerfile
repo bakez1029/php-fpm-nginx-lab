@@ -1,13 +1,20 @@
 FROM php:8.3-fpm-alpine
 
-# Common extensions (adjust as needed)
 RUN docker-php-ext-install pdo pdo_mysql
-
-# Optional: add bash + curl for debugging
 RUN apk add --no-cache bash curl
 
 WORKDIR /var/www/html
 
-COPY ../src .
+# Copy composer files first for caching
+COPY src/composer.json src/composer.lock ./
 
-COPY php.ini /usr/local/etc/php/conf.d/zz-custom.ini
+# Install composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && composer install --no-dev --optimize-autoloader \
+    && rm composer-setup.php
+
+# Copy application source
+COPY src .
+
+COPY php/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
