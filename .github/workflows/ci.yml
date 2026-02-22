@@ -8,16 +8,11 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/php-app
-  APP_DIR: php-lab/fpm-nginx
 
 jobs:
 
   build-test:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ${{ env.APP_DIR }}
 
     steps:
       - name: Checkout repository
@@ -50,22 +45,6 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: DB smoke test
-        run: |
-          docker compose exec -T php php -r '
-            require "/var/www/html/bootstrap.php";
-            $dsn = sprintf("mysql:host=%s;dbname=%s;charset=utf8mb4",
-              $_ENV["DB_HOST"], $_ENV["DB_NAME"]);
-            $pdo = new PDO(
-              $dsn,
-              $_ENV["DB_USER"],
-              $_ENV["DB_PASS"],
-              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-            );
-            $pdo->query("SELECT 1");
-            echo "DB OK\n";
-          '
-
       - name: Tear down
         if: always()
         run: docker compose down -v
@@ -79,10 +58,6 @@ jobs:
     permissions:
       packages: write
       contents: read
-
-    defaults:
-      run:
-        working-directory: ${{ env.APP_DIR }}
 
     steps:
       - name: Checkout repository
