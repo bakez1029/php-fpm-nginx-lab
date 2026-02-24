@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   nginx:
     image: nginx:1.25-alpine
@@ -17,6 +19,14 @@ services:
       dockerfile: php/Dockerfile
     volumes:
       - ./src:/var/www/html
+    environment:
+      DB_HOST: mysql
+      DB_DATABASE: app
+      DB_USER: app
+      DB_PASSWORD: apppass
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - appnet
 
@@ -33,12 +43,18 @@ services:
       - "3306:3306"
     networks:
       - appnet
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   composer:
     image: composer:2
     working_dir: /app
     volumes:
       - ./src:/app
+    profiles: ["tools"]
     entrypoint: ["composer"]
 
 volumes:
@@ -46,4 +62,3 @@ volumes:
 
 networks:
   appnet:
-

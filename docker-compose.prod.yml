@@ -3,6 +3,11 @@ services:
     image: ghcr.io/bakez1029/php-fpm-nginx-lab/php-app:latest
     env_file:
       - ./src/.env
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - appnet
 
@@ -11,6 +16,7 @@ services:
     ports:
       - "8081:80"
     volumes:
+      - ./src:/var/www/html:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - php
@@ -24,6 +30,11 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: apppass
       MYSQL_ROOT_PASSWORD: rootpass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - dbdata_prod:/var/lib/mysql
     networks:
